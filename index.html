@@ -41,6 +41,8 @@
       font-family: monospace;
       font-size: 12px;
       border-bottom: 2px solid #ef4444;
+      white-space: pre-wrap;
+      word-break: break-all;
     }
   </style>
 
@@ -51,7 +53,7 @@
       const display = document.getElementById('error-display');
       if (display) {
         display.style.display = 'block';
-        display.innerHTML = '<strong>Runtime Error:</strong> ' + msg + '<br><small>' + url + ' line ' + lineNo + '</small>';
+        display.innerHTML = '<strong>Runtime Error:</strong> ' + msg + '\n<small>Location: ' + url + ' (Line: ' + lineNo + ')</small>';
       }
       return false;
     };
