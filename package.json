@@ -1,0 +1,12 @@
+
+{
+  "name": "naija-bites-grills",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Authentic Nigerian Restaurant Website with AI Assistant",
+  "dependencies": {
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "@google/genai": "^1.38.0"
+  }
+}

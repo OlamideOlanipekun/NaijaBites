@@ -1,0 +1,7 @@
+{
+  "name": "Naija Bites & Grills",
+  "description": "An authentic Nigerian restaurant experience featuring traditional delicacies, vibrant atmosphere, and an AI-powered culinary assistant for personalized dish recommendations.",
+  "requestFramePermissions": [
+    "geolocation"
+  ]
+}
