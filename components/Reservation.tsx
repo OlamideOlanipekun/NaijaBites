@@ -1,10 +1,11 @@
 
 import React, { useState, useEffect, useRef } from 'react';
+import { createReservation } from '../services/api';
 
 // ScrollReveal Wrapper
-const ScrollReveal: React.FC<{ 
-  children: React.ReactNode; 
-  className?: string; 
+const ScrollReveal: React.FC<{
+  children: React.ReactNode;
+  className?: string;
   animation?: 'reveal' | 'reveal-left' | 'reveal-right' | 'reveal-scale';
   delay?: number;
 }> = ({ children, className = '', animation = 'reveal', delay = 0 }) => {
@@ -44,13 +45,34 @@ const Reservation: React.FC = () => {
     tablePreference: 'Main Dining'
   });
   const [submitted, setSubmitted] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setSubmitted(true);
-    setTimeout(() => {
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    }, 500);
+    setLoading(true);
+    setError('');
+
+    try {
+      await createReservation({
+        guest_name: formData.name,
+        guest_email: formData.email || undefined,
+        phone: formData.phone,
+        date: formData.date,
+        time: formData.time,
+        guests_count: parseInt(formData.guests),
+        message: `Occasion: ${formData.occasion}, Table Preference: ${formData.tablePreference}`
+      });
+
+      setSubmitted(true);
+      setTimeout(() => {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }, 500);
+    } catch (err: any) {
+      setError(err.message || 'Failed to create reservation. Please try again.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const tableTypes = [
@@ -65,23 +87,23 @@ const Reservation: React.FC = () => {
   return (
     <section id="reservations" className="py-24 bg-white relative overflow-hidden">
       <div className="absolute top-0 right-0 w-1/3 h-full bg-green-50/50 -skew-x-12 transform origin-top-right pointer-events-none"></div>
-      
+
       <div className="max-w-7xl mx-auto px-4 relative z-10">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-16 items-start">
-          
+
           <div className="lg:col-span-5 pt-10">
             <ScrollReveal animation="reveal-left">
               <div className="inline-block bg-yellow-500 text-green-950 px-4 py-1 rounded-full text-[10px] font-black uppercase tracking-widest mb-6 shadow-md">
                 Hospitality First
               </div>
               <h2 className="text-5xl md:text-7xl font-black text-gray-900 mb-8 leading-tight tracking-tighter">
-                SECURE YOUR <br/><span className="text-green-700 italic">SPOT</span>
+                SECURE YOUR <br /><span className="text-green-700 italic">SPOT</span>
               </h2>
               <p className="text-xl text-gray-500 mb-12 max-w-lg font-light leading-relaxed">
                 Whether it's a quiet evening for two or a boisterous celebration with the whole squad, we ensure your table is as warm as our hospitality.
               </p>
             </ScrollReveal>
-            
+
             <div className="grid grid-cols-1 gap-8">
               {[
                 { icon: 'fa-calendar-check', title: 'Instant Confirmation', desc: 'Book through our portal and receive your SMS/Email confirmation immediately.', color: 'text-yellow-600', bg: 'hover:bg-yellow-500' },
@@ -125,7 +147,7 @@ const Reservation: React.FC = () => {
                     <div className="bg-gray-50 p-6 rounded-2xl mb-8 border border-gray-100 max-w-sm mx-auto">
                       <p className="text-sm font-bold text-gray-400 uppercase tracking-widest mb-2">Booking Summary</p>
                       <p className="text-lg text-gray-700 font-medium">
-                        {formData.guests} Guests • {formData.tablePreference}<br/>
+                        {formData.guests} Guests • {formData.tablePreference}<br />
                         {new Date(formData.date).toLocaleDateString()} at {formData.time}
                       </p>
                     </div>
@@ -143,15 +165,15 @@ const Reservation: React.FC = () => {
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div className="md:col-span-2">
                           <label className="block text-xs font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">Full Name</label>
-                          <input required type="text" placeholder="e.g. Ebuka Jones" className="w-full px-6 py-4 rounded-2xl bg-gray-50 border border-gray-100 focus:bg-white focus:ring-2 focus:ring-green-600 outline-none transition font-medium" onChange={(e) => setFormData({...formData, name: e.target.value})} />
+                          <input required type="text" placeholder="e.g. Ebuka Jones" className="w-full px-6 py-4 rounded-2xl bg-gray-50 border border-gray-100 focus:bg-white focus:ring-2 focus:ring-green-600 outline-none transition font-medium" onChange={(e) => setFormData({ ...formData, name: e.target.value })} />
                         </div>
                         <div>
                           <label className="block text-xs font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">Phone Number</label>
-                          <input required type="tel" placeholder="+234..." className="w-full px-6 py-4 rounded-2xl bg-gray-50 border border-gray-100 focus:bg-white focus:ring-2 focus:ring-green-600 outline-none transition font-medium" onChange={(e) => setFormData({...formData, phone: e.target.value})} />
+                          <input required type="tel" placeholder="+234..." className="w-full px-6 py-4 rounded-2xl bg-gray-50 border border-gray-100 focus:bg-white focus:ring-2 focus:ring-green-600 outline-none transition font-medium" onChange={(e) => setFormData({ ...formData, phone: e.target.value })} />
                         </div>
                         <div>
                           <label className="block text-xs font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">Party Size</label>
-                          <select className="w-full px-6 py-4 rounded-2xl bg-gray-50 border border-gray-100 focus:bg-white focus:ring-2 focus:ring-green-600 outline-none transition font-bold cursor-pointer appearance-none" value={formData.guests} onChange={(e) => setFormData({...formData, guests: e.target.value})}>
+                          <select className="w-full px-6 py-4 rounded-2xl bg-gray-50 border border-gray-100 focus:bg-white focus:ring-2 focus:ring-green-600 outline-none transition font-bold cursor-pointer appearance-none" value={formData.guests} onChange={(e) => setFormData({ ...formData, guests: e.target.value })}>
                             {[1, 2, 3, 4, 5, 6, 8, 10, 12].map(num => (
                               <option key={num} value={num}>{num} {num === 1 ? 'Person' : 'People'}</option>
                             ))}
@@ -159,11 +181,11 @@ const Reservation: React.FC = () => {
                         </div>
                         <div>
                           <label className="block text-xs font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">Preferred Date</label>
-                          <input required type="date" min={today} className="w-full px-6 py-4 rounded-2xl bg-gray-50 border border-gray-100 focus:bg-white focus:ring-2 focus:ring-green-600 outline-none transition font-medium" onChange={(e) => setFormData({...formData, date: e.target.value})} />
+                          <input required type="date" min={today} className="w-full px-6 py-4 rounded-2xl bg-gray-50 border border-gray-100 focus:bg-white focus:ring-2 focus:ring-green-600 outline-none transition font-medium" onChange={(e) => setFormData({ ...formData, date: e.target.value })} />
                         </div>
                         <div>
                           <label className="block text-xs font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">Arrival Time</label>
-                          <input required type="time" className="w-full px-6 py-4 rounded-2xl bg-gray-50 border border-gray-100 focus:bg-white focus:ring-2 focus:ring-green-600 outline-none transition font-medium" onChange={(e) => setFormData({...formData, time: e.target.value})} />
+                          <input required type="time" className="w-full px-6 py-4 rounded-2xl bg-gray-50 border border-gray-100 focus:bg-white focus:ring-2 focus:ring-green-600 outline-none transition font-medium" onChange={(e) => setFormData({ ...formData, time: e.target.value })} />
                         </div>
                       </div>
                     </section>
@@ -175,7 +197,7 @@ const Reservation: React.FC = () => {
                       <label className="block text-xs font-black text-gray-400 uppercase tracking-widest mb-4 ml-1">Table Atmosphere</label>
                       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
                         {tableTypes.map(type => (
-                          <button key={type.id} type="button" onClick={() => setFormData({...formData, tablePreference: type.id})} className={`flex flex-col items-center p-5 rounded-2xl border-2 transition-all ${formData.tablePreference === type.id ? 'bg-green-50 border-green-600 text-green-900 shadow-md scale-105' : 'bg-white border-gray-100 text-gray-400 hover:border-green-200'}`}>
+                          <button key={type.id} type="button" onClick={() => setFormData({ ...formData, tablePreference: type.id })} className={`flex flex-col items-center p-5 rounded-2xl border-2 transition-all ${formData.tablePreference === type.id ? 'bg-green-50 border-green-600 text-green-900 shadow-md scale-105' : 'bg-white border-gray-100 text-gray-400 hover:border-green-200'}`}>
                             <i className={`fas ${type.icon} text-2xl mb-3 ${formData.tablePreference === type.id ? 'text-green-700' : ''}`}></i>
                             <span className="font-bold text-sm mb-1">{type.label}</span>
                             <span className="text-[10px] text-center opacity-70 leading-tight">{type.desc}</span>
@@ -183,8 +205,31 @@ const Reservation: React.FC = () => {
                         ))}
                       </div>
                     </section>
-                    <button className="w-full bg-green-700 text-white py-6 rounded-2xl font-black text-xl hover:bg-green-800 transition transform active:scale-95 shadow-2xl flex items-center justify-center gap-4">
-                      Confirm Reservation <i className="fas fa-chevron-right text-sm"></i>
+
+                    {/* Error Message */}
+                    {error && (
+                      <div className="p-4 bg-red-50 border border-red-200 rounded-xl text-red-800">
+                        <div className="flex items-center gap-2">
+                          <span>⚠️</span>
+                          <span className="font-semibold">{error}</span>
+                        </div>
+                      </div>
+                    )}
+
+                    <button
+                      disabled={loading}
+                      className="w-full bg-green-700 text-white py-6 rounded-2xl font-black text-xl hover:bg-green-800 transition transform active:scale-95 shadow-2xl flex items-center justify-center gap-4 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {loading ? (
+                        <>
+                          <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                          <span>Submitting...</span>
+                        </>
+                      ) : (
+                        <>
+                          Confirm Reservation <i className="fas fa-chevron-right text-sm"></i>
+                        </>
+                      )}
                     </button>
                   </form>
                 )}

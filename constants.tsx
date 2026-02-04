@@ -55,33 +55,42 @@ export const MENU_ITEMS: Dish[] = [
     description: 'Mashed beans served with a notoriously spicy palm oil sauce and soft Agege bread. The ultimate comfort food.',
     image: 'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?auto=format&fit=crop&q=80&w=800',
     tags: ['Spicy', 'Vegan']
+  },
+  {
+    id: '7',
+    name: 'Asun (Spicy Goat Meat)',
+    price: 3500,
+    category: 'Grills',
+    description: 'Slow-roasted goat meat sautéed in vibrant habanero peppers and onions. A spicy, smoky delicacy perfect for the brave.',
+    image: '/images/asun.jpg',
+    tags: ['Spicy', 'Chef Special']
   }
 ];
 
 export const TESTIMONIALS: Testimonial[] = [
-  { 
-    id: '1', 
-    name: 'Chidi Okoro', 
-    role: 'Food Critic', 
-    comment: "The Smoky Jollof took me straight back to my grandmother's kitchen in Enugu. This is not just food; it is a time machine.", 
-    rating: 5, 
-    avatar: 'https://i.pravatar.cc/150?u=chidi' 
+  {
+    id: '1',
+    name: 'Chidi Okoro',
+    role: 'Food Critic',
+    comment: "The Smoky Jollof took me straight back to my grandmother's kitchen in Enugu. This is not just food; it is a time machine.",
+    rating: 5,
+    avatar: 'https://i.pravatar.cc/150?u=chidi'
   },
-  { 
-    id: '2', 
-    name: 'Sarah Williams', 
-    role: 'Lagos Expat', 
-    comment: "Best Suya in the city, hands down. The atmosphere is vibrant, and the spice level is perfectly authentic.", 
-    rating: 5, 
-    avatar: 'https://i.pravatar.cc/150?u=sarah' 
+  {
+    id: '2',
+    name: 'Sarah Williams',
+    role: 'Lagos Expat',
+    comment: "Best Suya in the city, hands down. The atmosphere is vibrant, and the spice level is perfectly authentic.",
+    rating: 5,
+    avatar: 'https://i.pravatar.cc/150?u=sarah'
   },
-  { 
-    id: '3', 
-    name: 'Tunde Bakare', 
-    role: 'Digital Nomad', 
-    comment: "Their AI assistant recommended the Ewa Agoyin when I asked for something spicy but hearty. It was spot on!", 
-    rating: 5, 
-    avatar: 'https://i.pravatar.cc/150?u=tunde' 
+  {
+    id: '3',
+    name: 'Tunde Bakare',
+    role: 'Digital Nomad',
+    comment: "The Ewa Agoyin was exactly what I needed—spicy, hearty, and absolutely delicious. Spot on!",
+    rating: 5,
+    avatar: 'https://i.pravatar.cc/150?u=tunde'
   }
 ];
 

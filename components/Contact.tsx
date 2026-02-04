@@ -1,18 +1,31 @@
 
 import React, { useState } from 'react';
+import { submitContact } from '../services/api';
 
 const Contact: React.FC = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSent, setIsSent] = useState(false);
+  const [error, setError] = useState('');
+  const [formData, setFormData] = useState({
+    name: '',
+    email: '',
+    subject: 'General Inquiry',
+    message: ''
+  });
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
-    // Simulate API call
-    setTimeout(() => {
-      setIsSubmitting(false);
+    setError('');
+
+    try {
+      await submitContact(formData);
       setIsSent(true);
-    }, 1500);
+    } catch (err: any) {
+      setError(err.message || 'Failed to send message. Please try again.');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const contactMethods = [
@@ -51,7 +64,7 @@ const Contact: React.FC = () => {
       <div className="absolute top-0 left-0 w-full h-96 bg-green-900 -skew-y-3 origin-top-left -translate-y-20">
         <div className="hero-pattern absolute inset-0 opacity-10"></div>
       </div>
-      
+
       <div className="max-w-7xl mx-auto px-4 relative z-10">
         <div className="text-center mb-20 pt-10">
           <div className="inline-block bg-yellow-500 text-green-950 px-6 py-2 rounded-full text-[10px] font-black uppercase tracking-[0.3em] mb-6 shadow-xl">
@@ -69,7 +82,7 @@ const Contact: React.FC = () => {
           {/* Info Side: Contact Cards */}
           <div className="lg:col-span-4 space-y-6">
             {contactMethods.map((method) => (
-              <a 
+              <a
                 key={method.id}
                 href={method.link}
                 target={method.id === 'visit' ? '_blank' : undefined}
@@ -92,24 +105,24 @@ const Contact: React.FC = () => {
             ))}
 
             <div className="bg-gray-950 text-white p-10 rounded-[2.5rem] shadow-2xl relative overflow-hidden">
-               <div className="hero-pattern absolute inset-0 opacity-5"></div>
-               <div className="relative z-10">
-                 <h4 className="text-yellow-500 font-black uppercase tracking-widest text-xs mb-6">Social Vibes</h4>
-                 <div className="grid grid-cols-4 gap-4">
-                    {['instagram', 'facebook-f', 'twitter', 'tiktok'].map(icon => (
-                      <a 
-                        key={icon} 
-                        href="#" 
-                        className="w-full aspect-square rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center hover:bg-yellow-500 hover:text-green-950 transition-all duration-300"
-                      >
-                        <i className={`fab fa-${icon} text-lg`}></i>
-                      </a>
-                    ))}
-                 </div>
-                 <p className="mt-8 text-xs text-gray-500 font-medium leading-relaxed">
-                   Tag us in your food photos using <span className="text-white">#NaijaBites</span> for a chance to be featured in our monthly digest!
-                 </p>
-               </div>
+              <div className="hero-pattern absolute inset-0 opacity-5"></div>
+              <div className="relative z-10">
+                <h4 className="text-yellow-500 font-black uppercase tracking-widest text-xs mb-6">Social Vibes</h4>
+                <div className="grid grid-cols-4 gap-4">
+                  {['instagram', 'facebook-f', 'twitter', 'tiktok'].map(icon => (
+                    <a
+                      key={icon}
+                      href="#"
+                      className="w-full aspect-square rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center hover:bg-yellow-500 hover:text-green-950 transition-all duration-300"
+                    >
+                      <i className={`fab fa-${icon} text-lg`}></i>
+                    </a>
+                  ))}
+                </div>
+                <p className="mt-8 text-xs text-gray-500 font-medium leading-relaxed">
+                  Tag us in your food photos using <span className="text-white">#NaijaBites</span> for a chance to be featured in our monthly digest!
+                </p>
+              </div>
             </div>
           </div>
 
@@ -125,7 +138,7 @@ const Contact: React.FC = () => {
                   <p className="text-gray-500 max-w-sm mx-auto mb-10 leading-relaxed font-light">
                     Oga/Madam, thank you for reaching out! Our team has received your message and we'll get back to you faster than a hot plate of Jollof.
                   </p>
-                  <button 
+                  <button
                     onClick={() => setIsSent(false)}
                     className="text-green-700 font-black uppercase tracking-widest hover:underline"
                   >
@@ -138,36 +151,52 @@ const Contact: React.FC = () => {
                     <h3 className="text-3xl font-black text-gray-900 mb-2">Send us a Note</h3>
                     <p className="text-gray-400 font-medium">We usually respond within a few business hours.</p>
                   </div>
-                  
+
                   <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-8">
                     <div className="space-y-2">
                       <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Your Name</label>
-                      <input 
-                        required 
-                        type="text" 
-                        placeholder="e.g. Ebuka Jones" 
-                        className="w-full px-6 py-4 rounded-2xl bg-gray-50 border border-gray-100 focus:bg-white focus:ring-2 focus:ring-green-600 focus:border-transparent outline-none transition font-medium" 
+                      <input
+                        required
+                        type="text"
+                        placeholder="e.g. Ebuka Jones"
+                        value={formData.name}
+                        onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                        className="w-full px-6 py-4 rounded-2xl bg-gray-50 border border-gray-100 focus:bg-white focus:ring-2 focus:ring-green-600 focus:border-transparent outline-none transition font-medium"
                       />
                     </div>
                     <div className="space-y-2">
                       <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Email Address</label>
-                      <input 
-                        required 
-                        type="email" 
-                        placeholder="ebuka@email.com" 
-                        className="w-full px-6 py-4 rounded-2xl bg-gray-50 border border-gray-100 focus:bg-white focus:ring-2 focus:ring-green-600 focus:border-transparent outline-none transition font-medium" 
+                      <input
+                        required
+                        type="email"
+                        placeholder="ebuka@email.com"
+                        value={formData.email}
+                        onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                        className="w-full px-6 py-4 rounded-2xl bg-gray-50 border border-gray-100 focus:bg-white focus:ring-2 focus:ring-green-600 focus:border-transparent outline-none transition font-medium"
                       />
                     </div>
                     <div className="md:col-span-2 space-y-2">
                       <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Your Message</label>
-                      <textarea 
-                        required 
-                        placeholder="Tell us what's on your mind..." 
+                      <textarea
+                        required
+                        placeholder="Tell us what's on your mind..."
+                        value={formData.message}
+                        onChange={(e) => setFormData({ ...formData, message: e.target.value })}
                         className="w-full px-6 py-4 rounded-2xl bg-gray-50 border border-gray-100 focus:bg-white focus:ring-2 focus:ring-green-600 focus:border-transparent outline-none transition font-medium h-48 resize-none"
                       ></textarea>
                     </div>
                     <div className="md:col-span-2">
-                      <button 
+                      {/* Error Message */}
+                      {error && (
+                        <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-xl text-red-800">
+                          <div className="flex items-center gap-2">
+                            <span>⚠️</span>
+                            <span className="font-semibold">{error}</span>
+                          </div>
+                        </div>
+                      )}
+
+                      <button
                         disabled={isSubmitting}
                         className="w-full bg-green-700 text-white py-6 rounded-2xl font-black text-xl hover:bg-green-800 transition transform active:scale-95 shadow-2xl flex items-center justify-center gap-4 disabled:bg-gray-400"
                       >
@@ -186,20 +215,20 @@ const Contact: React.FC = () => {
             {/* Map Section */}
             <div className="bg-gray-100 rounded-[3rem] overflow-hidden h-80 border border-gray-100 relative group">
               <div className="absolute inset-0 bg-green-900/5 z-10 pointer-events-none group-hover:bg-transparent transition-all duration-700"></div>
-              <iframe 
-                src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d15858.986617260023!2d3.4244893!3d6.4267674!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x103bf53280e4953f%3A0x1536979207865a6e!2sVictoria%20Island%2C%20Lagos!5e0!3m2!1sen!2sng!4v1653841920000!5m2!1sen!2sng" 
-                className="w-full h-full grayscale hover:grayscale-0 transition-all duration-700" 
+              <iframe
+                src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d15858.986617260023!2d3.4244893!3d6.4267674!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x103bf53280e4953f%3A0x1536979207865a6e!2sVictoria%20Island%2C%20Lagos!5e0!3m2!1sen!2sng!4v1653841920000!5m2!1sen!2sng"
+                className="w-full h-full grayscale hover:grayscale-0 transition-all duration-700"
                 loading="lazy"
                 title="Restaurant Location"
               ></iframe>
               <div className="absolute bottom-6 right-6 z-20">
-                 <a 
-                   href="https://maps.google.com" 
-                   target="_blank" 
-                   className="bg-white/90 backdrop-blur px-6 py-3 rounded-full text-xs font-black text-green-900 shadow-xl hover:bg-yellow-500 transition-colors flex items-center gap-2"
-                 >
-                   <i className="fas fa-directions"></i> Open in Maps
-                 </a>
+                <a
+                  href="https://maps.google.com"
+                  target="_blank"
+                  className="bg-white/90 backdrop-blur px-6 py-3 rounded-full text-xs font-black text-green-900 shadow-xl hover:bg-yellow-500 transition-colors flex items-center gap-2"
+                >
+                  <i className="fas fa-directions"></i> Open in Maps
+                </a>
               </div>
             </div>
           </div>

@@ -1,7 +1,8 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { CartItem, Dish } from '../types';
 import { MENU_ITEMS } from '../constants';
+import { createOrder, verifyPayment, PAYSTACK_PUBLIC_KEY } from '../services/api';
 
 interface CartProps {
   items: CartItem[];
@@ -12,6 +13,12 @@ interface CartProps {
 }
 
 const Cart: React.FC<CartProps> = ({ items, isOpen, onClose, onUpdateQuantity, onNavigate }) => {
+  // Payment states
+  const [customerEmail, setCustomerEmail] = useState('');
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [paymentStatus, setPaymentStatus] = useState<'idle' | 'success' | 'error'>('idle');
+  const [statusMessage, setStatusMessage] = useState('');
+
   const subtotal = items.reduce((acc, item) => acc + (item.price * item.quantity), 0);
   const FREE_DELIVERY_THRESHOLD = 15000;
   const deliveryFee = subtotal >= FREE_DELIVERY_THRESHOLD ? 0 : 1500;
@@ -21,24 +28,104 @@ const Cart: React.FC<CartProps> = ({ items, isOpen, onClose, onUpdateQuantity, o
   const progressPercent = Math.min((subtotal / FREE_DELIVERY_THRESHOLD) * 100, 100);
   const remainingForFree = FREE_DELIVERY_THRESHOLD - subtotal;
 
-  const suggestions = MENU_ITEMS.filter(item => 
-    (item.category === 'Sides' || item.category === 'Drinks' || item.category === 'Starters') && 
+  const suggestions = MENU_ITEMS.filter(item =>
+    (item.category === 'Sides' || item.category === 'Drinks' || item.category === 'Starters') &&
     !items.find(cartItem => cartItem.id === item.id)
   ).slice(0, 3);
+
+  // Handle Paystack checkout
+  const handleCheckout = async () => {
+    if (!customerEmail) {
+      setPaymentStatus('error');
+      setStatusMessage('Please enter your email address');
+      return;
+    }
+
+    if (items.length === 0) {
+      setPaymentStatus('error');
+      setStatusMessage('Your cart is empty');
+      return;
+    }
+
+    try {
+      setIsProcessing(true);
+      setPaymentStatus('idle');
+      setStatusMessage('');
+
+      // 1. Create order in backend
+      const order = await createOrder({
+        customer_email: customerEmail,
+        items: items,
+        total_amount: total
+      });
+
+      // 2. Initialize Paystack
+      const PaystackPop = (window as any).PaystackPop;
+
+      if (!PaystackPop) {
+        throw new Error('Paystack script not loaded');
+      }
+
+      const handler = PaystackPop.setup({
+        key: PAYSTACK_PUBLIC_KEY,
+        email: order.email,
+        amount: Math.round(order.amount * 100), // Convert to kobo
+        ref: order.reference,
+        currency: 'NGN',
+        onClose: () => {
+          setIsProcessing(false);
+          setPaymentStatus('error');
+          setStatusMessage('Payment window closed');
+        },
+        callback: async (response: any) => {
+          // 3. Verify payment
+          try {
+            const verified = await verifyPayment(response.reference);
+
+            setPaymentStatus('success');
+            setStatusMessage(`Payment successful! Reference: ${verified.reference}`);
+
+            // Clear cart after successful payment
+            setTimeout(() => {
+              items.forEach(item => onUpdateQuantity(item.id, 0));
+              setCustomerEmail('');
+              setPaymentStatus('idle');
+              setStatusMessage('');
+            }, 3000);
+
+          } catch (error) {
+            console.error('Payment verification failed:', error);
+            setPaymentStatus('error');
+            setStatusMessage('Payment verification failed. Please contact support.');
+          } finally {
+            setIsProcessing(false);
+          }
+        }
+      });
+
+      handler.openIframe();
+
+    } catch (error: any) {
+      console.error('Checkout error:', error);
+      setIsProcessing(false);
+      setPaymentStatus('error');
+      setStatusMessage(error.message || 'Failed to process checkout. Please try again.');
+    }
+  };
 
   if (!isOpen) return null;
 
   return (
     <div className="fixed inset-0 z-[100] flex justify-end">
       {/* Backdrop */}
-      <div 
-        className="absolute inset-0 bg-green-950/40 backdrop-blur-sm animate-fade-in" 
-        onClick={onClose} 
+      <div
+        className="absolute inset-0 bg-green-950/40 backdrop-blur-sm animate-fade-in"
+        onClick={onClose}
       />
-      
+
       {/* Cart Panel */}
       <div className="relative w-full max-w-md bg-white h-full shadow-[0_0_100px_rgba(0,0,0,0.2)] flex flex-col animate-slide-in-right">
-        
+
         {/* Header */}
         <div className="p-6 border-b flex justify-between items-center bg-green-800 text-white relative overflow-hidden">
           <div className="hero-pattern absolute inset-0 opacity-10"></div>
@@ -50,8 +137,8 @@ const Cart: React.FC<CartProps> = ({ items, isOpen, onClose, onUpdateQuantity, o
               {items.length} {items.length === 1 ? 'Delicacy' : 'Delicacies'} Selected
             </p>
           </div>
-          <button 
-            onClick={onClose} 
+          <button
+            onClick={onClose}
             className="relative z-10 w-10 h-10 hover:bg-white/10 rounded-full flex items-center justify-center transition-all group"
           >
             <i className="fas fa-times text-xl group-hover:rotate-90 transition-transform"></i>
@@ -70,7 +157,7 @@ const Cart: React.FC<CartProps> = ({ items, isOpen, onClose, onUpdateQuantity, o
               </span>
             </div>
             <div className="h-2 w-full bg-green-200 rounded-full overflow-hidden">
-              <div 
+              <div
                 className="h-full bg-green-600 transition-all duration-1000 ease-out"
                 style={{ width: `${progressPercent}%` }}
               />
@@ -89,7 +176,7 @@ const Cart: React.FC<CartProps> = ({ items, isOpen, onClose, onUpdateQuantity, o
               <p className="text-gray-500 mb-8 font-light leading-relaxed">
                 Your stomach is sending signals. Why not browse our legendary Jollof or Suya?
               </p>
-              <button 
+              <button
                 onClick={() => {
                   if (onNavigate) onNavigate('menu');
                   onClose();
@@ -104,8 +191,8 @@ const Cart: React.FC<CartProps> = ({ items, isOpen, onClose, onUpdateQuantity, o
               {/* Item List */}
               <div className="space-y-4">
                 {items.map((item, index) => (
-                  <div 
-                    key={item.id} 
+                  <div
+                    key={item.id}
                     className="group bg-white p-4 rounded-3xl border border-gray-100 shadow-sm hover:shadow-md transition-all flex gap-4 relative overflow-hidden animate-item-pop"
                     style={{ animationDelay: `${0.3 + index * 0.1}s` }}
                   >
@@ -115,17 +202,17 @@ const Cart: React.FC<CartProps> = ({ items, isOpen, onClose, onUpdateQuantity, o
                     <div className="flex-1 min-w-0">
                       <h3 className="font-black text-gray-900 truncate pr-6">{item.name}</h3>
                       <p className="text-green-700 font-bold text-sm">₦{item.price.toLocaleString()}</p>
-                      
+
                       <div className="flex items-center gap-4 mt-3">
                         <div className="flex items-center bg-gray-50 rounded-xl p-1 border border-gray-100">
-                          <button 
+                          <button
                             onClick={() => onUpdateQuantity(item.id, -1)}
                             className="w-8 h-8 rounded-lg flex items-center justify-center hover:bg-white hover:shadow-sm transition text-gray-500 hover:text-red-500"
                           >
                             <i className={`fas ${item.quantity === 1 ? 'fa-trash-alt text-xs' : 'fa-minus text-xs'}`}></i>
                           </button>
                           <span className="w-8 text-center font-black text-sm">{item.quantity}</span>
-                          <button 
+                          <button
                             onClick={() => onUpdateQuantity(item.id, 1)}
                             className="w-8 h-8 rounded-lg flex items-center justify-center hover:bg-white hover:shadow-sm transition text-gray-500 hover:text-green-600"
                           >
@@ -147,7 +234,7 @@ const Cart: React.FC<CartProps> = ({ items, isOpen, onClose, onUpdateQuantity, o
                   <h4 className="text-[10px] font-black uppercase tracking-[0.3em] text-gray-400 mb-6">Complete your meal</h4>
                   <div className="flex gap-4 overflow-x-auto pb-4 no-scrollbar">
                     {suggestions.map((dish, index) => (
-                      <button 
+                      <button
                         key={dish.id}
                         onClick={() => onUpdateQuantity(dish.id, 1)}
                         className="shrink-0 w-40 bg-white p-3 rounded-2xl border border-gray-100 shadow-sm hover:shadow-lg transition-all text-left group animate-item-pop"
@@ -196,12 +283,57 @@ const Cart: React.FC<CartProps> = ({ items, isOpen, onClose, onUpdateQuantity, o
               </div>
             </div>
 
-            <button 
-              className="group w-full bg-green-700 text-white py-5 rounded-2xl font-black text-xl hover:bg-green-800 transition shadow-xl active:scale-95 flex items-center justify-center gap-4 overflow-hidden relative"
+            {/* Email Input for Checkout */}
+            <div className="mb-4">
+              <label className="block text-sm font-semibold mb-2 text-gray-700">
+                Email Address (for payment receipt)
+              </label>
+              <input
+                type="email"
+                value={customerEmail}
+                onChange={(e) => setCustomerEmail(e.target.value)}
+                placeholder="your.email@example.com"
+                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-600 transition"
+                required
+              />
+            </div>
+
+            {/* Status Messages */}
+            {paymentStatus === 'success' && (
+              <div className="mb-4 p-4 bg-green-50 border border-green-200 rounded-xl text-green-800">
+                <div className="flex items-center gap-2">
+                  <span className="text-2xl">✅</span>
+                  <span className="font-semibold">{statusMessage}</span>
+                </div>
+              </div>
+            )}
+
+            {paymentStatus === 'error' && (
+              <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-xl text-red-800">
+                <div className="flex items-center gap-2">
+                  <span className="text-2xl">⚠️</span>
+                  <span className="font-semibold">{statusMessage}</span>
+                </div>
+              </div>
+            )}
+
+            <button
+              onClick={handleCheckout}
+              disabled={isProcessing}
+              className="group w-full bg-green-700 text-white py-5 rounded-2xl font-black text-xl hover:bg-green-800 transition shadow-xl active:scale-95 flex items-center justify-center gap-4 overflow-hidden relative disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              <span className="relative z-10">Confirm Order</span>
-              <i className="fas fa-arrow-right text-sm group-hover:translate-x-2 transition-transform relative z-10"></i>
-              <div className="absolute inset-0 bg-white/10 translate-y-full group-hover:translate-y-0 transition-transform duration-500"></div>
+              {isProcessing ? (
+                <>
+                  <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                  <span className="relative z-10">Processing Payment...</span>
+                </>
+              ) : (
+                <>
+                  <span className="relative z-10">Confirm Order</span>
+                  <i className="fas fa-arrow-right text-sm group-hover:translate-x-2 transition-transform relative z-10"></i>
+                  <div className="absolute inset-0 bg-white/10 translate-y-full group-hover:translate-y-0 transition-transform duration-500"></div>
+                </>
+              )}
             </button>
 
             {/* Trust Badges */}

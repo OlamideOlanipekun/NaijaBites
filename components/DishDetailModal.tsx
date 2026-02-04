@@ -1,6 +1,7 @@
 
 import React from 'react';
 import { Dish } from '../types';
+import { MENU_ITEMS } from '../constants';
 
 interface DishDetailModalProps {
   dish: Dish;
@@ -12,14 +13,14 @@ const DishDetailModal: React.FC<DishDetailModalProps> = ({ dish, onClose, onAddT
   return (
     <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
       {/* Backdrop */}
-      <div 
+      <div
         className="absolute inset-0 bg-green-950/80 backdrop-blur-md animate-fade-in"
         onClick={onClose}
       />
-      
+
       {/* Modal Content */}
       <div className="relative bg-white w-full max-w-5xl max-h-[90vh] overflow-y-auto rounded-[3rem] shadow-2xl animate-scale-in">
-        <button 
+        <button
           onClick={onClose}
           className="absolute top-6 right-6 z-10 w-12 h-12 bg-white/80 backdrop-blur rounded-full flex items-center justify-center text-green-950 hover:bg-yellow-500 transition shadow-lg"
         >
@@ -29,9 +30,9 @@ const DishDetailModal: React.FC<DishDetailModalProps> = ({ dish, onClose, onAddT
         <div className="flex flex-col lg:flex-row h-full">
           {/* Image Section */}
           <div className="lg:w-1/2 h-80 lg:h-auto relative">
-            <img 
-              src={dish.image} 
-              alt={dish.name} 
+            <img
+              src={dish.image}
+              alt={dish.name}
               className="w-full h-full object-cover"
             />
             <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent"></div>
@@ -78,31 +79,43 @@ const DishDetailModal: React.FC<DishDetailModalProps> = ({ dish, onClose, onAddT
                   <section>
                     <h4 className="text-xs font-black uppercase tracking-[0.3em] text-gray-400 mb-4">Preparation Time</h4>
                     <div className="flex items-center gap-2 text-gray-700 font-bold">
-                       <i className="far fa-clock text-green-600"></i> 20 - 25 Mins
+                      <i className="far fa-clock text-green-600"></i> 20 - 25 Mins
                     </div>
                   </section>
                 </div>
 
-                <section className="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm">
-                  <h4 className="text-xs font-black uppercase tracking-[0.3em] text-green-800 mb-4 flex items-center gap-2">
-                    <i className="fas fa-handshake"></i> Perfect Pairing
-                  </h4>
-                  <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 bg-gray-100 rounded-xl overflow-hidden shrink-0">
-                      <img src="https://images.unsplash.com/photo-1582211594533-268f4f1edeb9?auto=format&fit=crop&q=80&w=200" className="w-full h-full object-cover" alt="Pairing" />
-                    </div>
-                    <div>
-                      <p className="text-sm font-bold text-gray-900">Zobo House Special</p>
-                      <p className="text-[10px] text-gray-400 font-medium">Adds a refreshing ginger kick</p>
-                    </div>
-                    <button className="ml-auto text-green-700 hover:text-green-900 transition font-black text-xs uppercase tracking-widest">Add Pair +</button>
-                  </div>
-                </section>
+                {(() => {
+                  const pairingItem = MENU_ITEMS.find(item => item.id === '5');
+                  if (!pairingItem) return null;
+
+                  return (
+                    <section className="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm">
+                      <h4 className="text-xs font-black uppercase tracking-[0.3em] text-green-800 mb-4 flex items-center gap-2">
+                        <i className="fas fa-handshake"></i> Perfect Pairing
+                      </h4>
+                      <div className="flex items-center gap-4">
+                        <div className="w-12 h-12 bg-gray-100 rounded-xl overflow-hidden shrink-0">
+                          <img src={pairingItem.image} className="w-full h-full object-cover" alt={pairingItem.name} />
+                        </div>
+                        <div>
+                          <p className="text-sm font-bold text-gray-900">{pairingItem.name}</p>
+                          <p className="text-[10px] text-gray-400 font-medium line-clamp-1">{pairingItem.description}</p>
+                        </div>
+                        <button
+                          onClick={() => onAddToCart(pairingItem)}
+                          className="ml-auto text-green-700 hover:text-green-900 transition font-black text-xs uppercase tracking-widest"
+                        >
+                          Add Pair +
+                        </button>
+                      </div>
+                    </section>
+                  );
+                })()}
               </div>
             </div>
 
             <div className="mt-12 flex items-center gap-6">
-              <button 
+              <button
                 onClick={() => onAddToCart(dish)}
                 className="flex-1 bg-green-700 hover:bg-green-800 text-white py-5 rounded-2xl font-black text-xl transition shadow-xl active:scale-95 flex items-center justify-center gap-3"
               >
